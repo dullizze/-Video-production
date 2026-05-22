@@ -24,7 +24,8 @@ docker compose build
 docker compose run --rm shorts "클레오파트라는 이집트인이 아니었다" --no-upload
 ```
 
-생성물은 호스트의 `runs/<날짜>/final.mp4` 에 나옵니다 (compose 볼륨으로 연결됨).
+생성물은 호스트의 `runs/<날짜>/<job_id>/final.mp4` 에 나옵니다 (compose 볼륨으로 연결됨).
+`job_id`는 자동 생성되며, 재현 가능한 실행이 필요하면 `--job-id my-job`처럼 지정할 수 있습니다.
 
 ## 구조
 
@@ -35,6 +36,7 @@ data/            # 주제 큐(topics.json) 등
 Dockerfile       # 실행 환경 정의
 docker-compose.yml
 .env.example     # 키 템플릿 (실제 .env 는 커밋 금지)
+runs/            # job 단위 산출물: runs/<날짜>/<job_id>/job.json + final.mp4
 ```
 
 ## 참고

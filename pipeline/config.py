@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import os
-from datetime import date
+import re
+import uuid
+from datetime import date, datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -41,11 +43,26 @@ NUM_VISUALS = int(os.getenv("NUM_VISUALS", "5"))
 XAI_API_KEY = os.getenv("XAI_API_KEY", "")
 XAI_IMAGE_MODEL = os.getenv("XAI_IMAGE_MODEL", "grok-imagine-image")
 
+JOB_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
 
-def run_dir(d: date | None = None) -> Path:
-    """runs/YYYY-MM-DD/ 경로 반환 (없으면 생성)."""
+
+def new_job_id() -> str:
+    """로컬 파일 시스템에서 쓰기 쉬운 짧은 작업 ID."""
+    return f"{datetime.now().strftime('%H%M%S')}-{uuid.uuid4().hex[:8]}"
+
+
+def validate_job_id(job_id: str) -> str:
+    """경로 탈출을 막기 위해 안전한 job_id만 허용."""
+    if not JOB_ID_RE.fullmatch(job_id):
+        raise ValueError("job_id는 영문/숫자로 시작하고 영문·숫자·_·-·.만 사용할 수 있습니다.")
+    return job_id
+
+
+def run_dir(d: date | None = None, job_id: str | None = None) -> Path:
+    """runs/YYYY-MM-DD/<job_id>/ 경로 반환 (없으면 생성)."""
     d = d or date.today()
-    p = ROOT / "runs" / d.isoformat()
+    job_id = validate_job_id(job_id or new_job_id())
+    p = ROOT / "runs" / d.isoformat() / job_id
     (p / "assets").mkdir(parents=True, exist_ok=True)
     (p / "logs").mkdir(parents=True, exist_ok=True)
     return p
