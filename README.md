@@ -36,8 +36,9 @@ docker compose up api
 ```
 
 - `GET /health`
-- `POST /jobs` — `job.json` 생성 (`status=pending`)
+- `POST /jobs` — `job.json` 생성 후 기본값으로 백그라운드 실행 예약 (`auto_start=false`면 생성만)
 - `GET /jobs/{job_id}?date=YYYY-MM-DD` — job 상태 조회
+- `POST /jobs/{job_id}/run?date=YYYY-MM-DD` — 기존 job 실행/재실행 예약
 - `GET /jobs/{job_id}/video?date=YYYY-MM-DD` — 렌더 완료된 mp4 반환
 
 ## 구조

@@ -32,13 +32,32 @@ def run(
     no_upload: bool = True,
     template: str | None = None,
     job_id: str | None = None,
+    out_dir: Path | None = None,
 ) -> Path:
     job_id = config.validate_job_id(job_id) if job_id else config.new_job_id()
-    out = config.run_dir(job_id=job_id)
+    out = out_dir or config.run_dir(job_id=job_id)
+    (out / "assets").mkdir(parents=True, exist_ok=True)
+    (out / "logs").mkdir(parents=True, exist_ok=True)
     log = _setup_logging(out)
     selected_template = template or config.TEMPLATE
     selected_tone = tone or config.DEFAULT_TONE
-    job = jobs.create_manifest(topic, selected_tone, selected_template, job_id, "running", "start")
+    job_path = out / "job.json"
+    if job_path.exists():
+        job = jobs.read_job_path(job_path)
+        job.update(
+            {
+                "topic": topic,
+                "tone": selected_tone,
+                "template": selected_template,
+                "status": "running",
+                "step": "start",
+                "error": None,
+            }
+        )
+        job.setdefault("artifacts", {})
+        jobs.write_job(out, job)
+    else:
+        job = jobs.create_manifest(topic, selected_tone, selected_template, job_id, "running", "start")
     log.info("=== 파이프라인 시작: %r → %s ===", topic, out)
 
     def step(num: int, name: str, fn):
