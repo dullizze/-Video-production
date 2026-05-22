@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dullizze</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f7f9;
+        --panel: #ffffff;
+        --panel-soft: #f1f5f3;
+        --text: #1e2428;
+        --muted: #647078;
+        --line: #d9e0de;
+        --accent: #0f766e;
+        --accent-dark: #115e59;
+        --blue: #2563eb;
+        --amber: #b7791f;
+        --red: #b42318;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      .shell {
+        min-height: 100vh;
+        display: grid;
+        grid-template-rows: 58px 1fr;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 0 24px;
+        background: #ffffff;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .mark {
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, var(--accent), var(--blue));
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 18px;
+        line-height: 1.2;
+        font-weight: 750;
+      }
+
+      .top-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 99px;
+        background: var(--accent);
+      }
+
+      main {
+        display: grid;
+        grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
+        gap: 18px;
+        padding: 18px;
+        min-height: 0;
+      }
+
+      section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        min-width: 0;
+      }
+
+      .left {
+        display: grid;
+        gap: 18px;
+        align-content: start;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .panel h2 {
+        margin: 0 0 16px;
+        font-size: 15px;
+        font-weight: 720;
+      }
+
+      label {
+        display: block;
+        margin: 14px 0 7px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      textarea,
+      input[type="text"] {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--text);
+        outline: none;
+      }
+
+      textarea {
+        min-height: 114px;
+        resize: vertical;
+        padding: 12px;
+        line-height: 1.45;
+      }
+
+      input[type="text"] {
+        height: 40px;
+        padding: 0 11px;
+      }
+
+      textarea:focus,
+      input[type="text"]:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+      }
+
+      .segments {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        padding: 4px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-soft);
+      }
+
+      .segment {
+        height: 36px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .segment[aria-pressed="true"] {
+        background: #ffffff;
+        color: var(--accent-dark);
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+      }
+
+      .check-row {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin: 14px 0 0;
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 650;
+      }
+
+      .check-row input {
+        width: 17px;
+        height: 17px;
+        accent-color: var(--accent);
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      button.primary,
+      button.secondary {
+        height: 40px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 750;
+      }
+
+      button.primary {
+        border: 1px solid var(--accent);
+        background: var(--accent);
+        color: #ffffff;
+      }
+
+      button.secondary {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        color: var(--text);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.58;
+      }
+
+      .preview {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        min-height: 0;
+      }
+
+      .preview-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
+        gap: 16px;
+        padding: 18px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .job-title {
+        margin: 0;
+        font-size: 17px;
+        line-height: 1.25;
+        font-weight: 760;
+        overflow-wrap: anywhere;
+      }
+
+      .job-meta {
+        margin-top: 7px;
+        color: var(--muted);
+        font-size: 13px;
+        overflow-wrap: anywhere;
+      }
+
+      .badge {
+        min-width: 88px;
+        height: 30px;
+        padding: 0 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #ffffff;
+        font-size: 12px;
+        font-weight: 760;
+        text-transform: uppercase;
+      }
+
+      .badge.queued,
+      .badge.running {
+        color: var(--amber);
+        border-color: #efd9aa;
+        background: #fff8eb;
+      }
+
+      .badge.done {
+        color: var(--accent-dark);
+        border-color: #b9ddd7;
+        background: #ebf8f5;
+      }
+
+      .badge.failed {
+        color: var(--red);
+        border-color: #f2c3bd;
+        background: #fff0ee;
+      }
+
+      .preview-body {
+        display: grid;
+        grid-template-columns: minmax(250px, 360px) minmax(0, 1fr);
+        min-height: 0;
+      }
+
+      .video-pane {
+        padding: 18px;
+        border-right: 1px solid var(--line);
+        background: #111827;
+        min-height: 0;
+      }
+
+      .video-frame {
+        width: min(100%, 320px);
+        aspect-ratio: 9 / 16;
+        margin: 0 auto;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #0b111d;
+        color: #cbd5e1;
+        text-align: center;
+        padding: 18px;
+      }
+
+      video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #000000;
+      }
+
+      .detail-pane {
+        padding: 18px;
+        min-width: 0;
+        overflow: auto;
+      }
+
+      .steps {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr);
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 14px;
+      }
+
+      .step:last-child {
+        border-bottom: 0;
+      }
+
+      .key {
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .value {
+        overflow-wrap: anywhere;
+      }
+
+      .error {
+        margin-top: 14px;
+        padding: 12px;
+        border-radius: 6px;
+        background: #fff0ee;
+        color: var(--red);
+        font-size: 13px;
+        overflow-wrap: anywhere;
+      }
+
+      @media (max-width: 900px) {
+        main,
+        .preview-body {
+          grid-template-columns: 1fr;
+        }
+
+        .video-pane {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+
+      @media (max-width: 560px) {
+        header {
+          padding: 0 14px;
+        }
+
+        main {
+          padding: 12px;
+        }
+
+        .actions {
+          grid-template-columns: 1fr;
+        }
+
+        .preview-head {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div class="brand">
+          <div class="mark" aria-hidden="true"></div>
+          <h1>Dullizze</h1>
+        </div>
+        <div class="top-status"><span class="dot"></span><span id="apiState">API</span></div>
+      </header>
+
+      <main>
+        <div class="left">
+          <section class="panel">
+            <h2>생성</h2>
+            <form id="createForm">
+              <label for="topic">주제</label>
+              <textarea id="topic" maxlength="200" required>클레오파트라는 이집트인이 아니었다</textarea>
+
+              <label for="tone">톤</label>
+              <input id="tone" type="text" value="흥미로운_사실" />
+
+              <label>템플릿</label>
+              <div class="segments" role="group" aria-label="템플릿">
+                <button class="segment" type="button" data-template="documentary" aria-pressed="true">
+                  Documentary
+                </button>
+                <button class="segment" type="button" data-template="pop" aria-pressed="false">Pop</button>
+              </div>
+
+              <label class="check-row">
+                <input id="autoStart" type="checkbox" checked />
+                자동 시작
+              </label>
+
+              <div class="actions">
+                <button id="createBtn" class="primary" type="submit">생성</button>
+                <button id="runBtn" class="secondary" type="button">실행</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="panel">
+            <h2>조회</h2>
+            <label for="jobId">Job ID</label>
+            <input id="jobId" type="text" autocomplete="off" />
+            <label for="jobDate">날짜</label>
+            <input id="jobDate" type="text" autocomplete="off" />
+            <div class="actions">
+              <button id="loadBtn" class="secondary" type="button">조회</button>
+              <button id="clearBtn" class="secondary" type="button">초기화</button>
+            </div>
+          </section>
+        </div>
+
+        <section class="preview">
+          <div class="preview-head">
+            <div>
+              <p id="jobTitle" class="job-title">작업 없음</p>
+              <div id="jobMeta" class="job-meta">-</div>
+            </div>
+            <span id="statusBadge" class="badge">idle</span>
+          </div>
+          <div class="preview-body">
+            <div class="video-pane">
+              <div id="videoFrame" class="video-frame">final.mp4</div>
+            </div>
+            <div class="detail-pane">
+              <h2>상태</h2>
+              <div class="steps">
+                <div class="step"><div class="key">Step</div><div id="stepValue" class="value">-</div></div>
+                <div class="step"><div class="key">Template</div><div id="templateValue" class="value">-</div></div>
+                <div class="step"><div class="key">Updated</div><div id="updatedValue" class="value">-</div></div>
+                <div class="step"><div class="key">Run Dir</div><div id="runDirValue" class="value">-</div></div>
+              </div>
+              <div id="errorBox" class="error" hidden></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const state = {
+        template: "documentary",
+        job: null,
+        timer: null,
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const today = new Date().toISOString().slice(0, 10);
+      $("jobDate").value = today;
+
+      async function request(path, options = {}) {
+        const res = await fetch(path, {
+          headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+          ...options,
+        });
+        if (!res.ok) {
+          let message = `${res.status} ${res.statusText}`;
+          try {
+            const data = await res.json();
+            message = data.detail || message;
+          } catch (_) {}
+          throw new Error(message);
+        }
+        return res.json();
+      }
+
+      function setTemplate(next) {
+        state.template = next;
+        document.querySelectorAll(".segment").forEach((button) => {
+          button.setAttribute("aria-pressed", String(button.dataset.template === next));
+        });
+      }
+
+      function setBadge(status) {
+        const badge = $("statusBadge");
+        badge.textContent = status || "idle";
+        badge.className = `badge ${status || ""}`;
+      }
+
+      function videoUrl(job) {
+        const date = encodeURIComponent(($("jobDate").value || today).trim());
+        return `/jobs/${encodeURIComponent(job.job_id)}/video?date=${date}`;
+      }
+
+      function renderVideo(job) {
+        const frame = $("videoFrame");
+        frame.innerHTML = "";
+        if (job?.artifacts?.video && job.status === "done") {
+          const video = document.createElement("video");
+          video.controls = true;
+          video.src = videoUrl(job);
+          frame.appendChild(video);
+          return;
+        }
+        frame.textContent = "final.mp4";
+      }
+
+      function renderJob(job) {
+        state.job = job;
+        $("jobId").value = job?.job_id || "";
+        $("jobTitle").textContent = job?.topic || "작업 없음";
+        $("jobMeta").textContent = job ? job.job_id : "-";
+        $("stepValue").textContent = job?.step || "-";
+        $("templateValue").textContent = job?.template || "-";
+        $("updatedValue").textContent = job?.updated_at || "-";
+        $("runDirValue").textContent = job?.run_dir || "-";
+        setBadge(job?.status || "idle");
+        renderVideo(job);
+
+        const error = job?.error?.message;
+        $("errorBox").hidden = !error;
+        $("errorBox").textContent = error || "";
+
+        if (job && ["queued", "running"].includes(job.status)) {
+          startPolling();
+        } else {
+          stopPolling();
+        }
+      }
+
+      function stopPolling() {
+        if (state.timer) {
+          clearInterval(state.timer);
+          state.timer = null;
+        }
+      }
+
+      function startPolling() {
+        if (state.timer || !state.job) return;
+        state.timer = setInterval(loadJob, 2500);
+      }
+
+      async function createJob(event) {
+        event.preventDefault();
+        $("createBtn").disabled = true;
+        try {
+          const job = await request("/jobs", {
+            method: "POST",
+            body: JSON.stringify({
+              topic: $("topic").value,
+              tone: $("tone").value || null,
+              template: state.template,
+              auto_start: $("autoStart").checked,
+            }),
+          });
+          renderJob(job);
+        } catch (error) {
+          showError(error.message);
+        } finally {
+          $("createBtn").disabled = false;
+        }
+      }
+
+      async function loadJob() {
+        const id = $("jobId").value.trim();
+        if (!id) return;
+        const date = $("jobDate").value.trim();
+        try {
+          const job = await request(`/jobs/${encodeURIComponent(id)}${date ? `?date=${encodeURIComponent(date)}` : ""}`);
+          renderJob(job);
+        } catch (error) {
+          stopPolling();
+          showError(error.message);
+        }
+      }
+
+      async function runJob() {
+        const id = $("jobId").value.trim();
+        if (!id) return;
+        $("runBtn").disabled = true;
+        const date = $("jobDate").value.trim();
+        try {
+          const job = await request(`/jobs/${encodeURIComponent(id)}/run${date ? `?date=${encodeURIComponent(date)}` : ""}`, {
+            method: "POST",
+          });
+          renderJob(job);
+        } catch (error) {
+          showError(error.message);
+        } finally {
+          $("runBtn").disabled = false;
+        }
+      }
+
+      function showError(message) {
+        $("errorBox").hidden = false;
+        $("errorBox").textContent = message;
+      }
+
+      async function checkHealth() {
+        try {
+          await request("/health");
+          $("apiState").textContent = "API online";
+        } catch (_) {
+          $("apiState").textContent = "API offline";
+        }
+      }
+
+      document.querySelectorAll(".segment").forEach((button) => {
+        button.addEventListener("click", () => setTemplate(button.dataset.template));
+      });
+      $("createForm").addEventListener("submit", createJob);
+      $("loadBtn").addEventListener("click", loadJob);
+      $("runBtn").addEventListener("click", runJob);
+      $("clearBtn").addEventListener("click", () => {
+        stopPolling();
+        renderJob(null);
+        $("jobId").value = "";
+      });
+      checkHealth();
+    </script>
+  </body>
+</html>

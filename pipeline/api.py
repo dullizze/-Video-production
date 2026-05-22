@@ -5,7 +5,7 @@ from pathlib import Path
 from threading import Lock
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
 
 from pipeline import config
@@ -14,6 +14,7 @@ from pipeline import main as pipeline_main
 
 app = FastAPI(title="Dullizze Shorts API", version="0.1.0")
 WORKER_LOCK = Lock()
+DASHBOARD_PATH = config.ROOT / "web" / "dashboard.html"
 
 
 class JobCreate(BaseModel):
@@ -67,6 +68,11 @@ def _enqueue(job: dict, background_tasks: BackgroundTasks) -> dict:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/", response_class=HTMLResponse)
+def dashboard() -> HTMLResponse:
+    return HTMLResponse(DASHBOARD_PATH.read_text(encoding="utf-8"))
 
 
 @app.post("/jobs", status_code=201)
