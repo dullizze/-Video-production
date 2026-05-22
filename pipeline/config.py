@@ -23,10 +23,12 @@ CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
 DEFAULT_VOICE = os.getenv("DEFAULT_VOICE", "ko-KR-SunHiNeural")
 DEFAULT_TONE = os.getenv("DEFAULT_TONE", "흥미로운_사실")
 
-# --- 자막 (faster-whisper) ---
-# PRD는 large-v3 권장(프로덕션 품질). CPU 반복 테스트 속도를 위해 기본은 small,
-# .env의 WHISPER_MODEL로 large-v3 등으로 교체 가능.
-WHISPER_MODEL = os.getenv("WHISPER_MODEL", "small")
+# --- 자막 (TTS 단어경계 기반 구문 그룹핑) ---
+# 어절을 "한 호흡 = 한 줄"로 묶는 기준. 아래 중 하나라도 충족하면 줄을 끊는다.
+CAPTION_MAX_CHARS = int(os.getenv("CAPTION_MAX_CHARS", "16"))   # 한 줄 최대 글자수(공백 제외)
+CAPTION_MAX_WORDS = int(os.getenv("CAPTION_MAX_WORDS", "4"))    # 한 줄 최대 어절수
+CAPTION_MAX_MS = int(os.getenv("CAPTION_MAX_MS", "2500"))       # 한 줄 최대 표시시간
+CAPTION_PAUSE_MS = int(os.getenv("CAPTION_PAUSE_MS", "400"))    # 이만큼 멈추면 끊기
 
 # --- 비주얼 ---
 NUM_VISUALS = int(os.getenv("NUM_VISUALS", "5"))

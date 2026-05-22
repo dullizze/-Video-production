@@ -44,7 +44,7 @@ def run(topic: str, tone: str | None = None, no_upload: bool = True) -> Path:
     script = step(2, "스크립트 생성", lambda: script_gen.generate(topic, out, tone))
     mp3 = step(3, "TTS", lambda: tts.synthesize(script["narration"], out))
     assets = step(4, "비주얼 수집", lambda: visuals.collect(script["visual_prompts"], out))
-    caps = step(5, "자막 타이밍", lambda: captions.transcribe(mp3, out))
+    caps = step(5, "자막 그룹핑", lambda: captions.build(out))
     final = step(6, "영상 합성", lambda: render.render(mp3, caps, assets, out))
 
     log.info("=== 완료: %s ===", final)
