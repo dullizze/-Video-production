@@ -35,10 +35,14 @@ def create_manifest(
     status: str = "pending",
     step: str = "created",
     overwrite: bool = True,
+    visual_mode: str | None = None,
+    visual_provider: str | None = None,
 ) -> dict[str, Any]:
     job_id = config.validate_job_id(job_id) if job_id else config.new_job_id()
     user_id = accounts.normalize_user_id(user_id)
     plan = accounts.normalize_plan(plan)
+    visual_mode = config.validate_visual_mode(visual_mode)
+    visual_provider = config.validate_visual_provider(visual_provider)
     out_dir = config.run_dir(job_id=job_id)
     if not overwrite and (out_dir / "job.json").exists():
         raise FileExistsError(f"이미 존재하는 job_id입니다: {job_id}")
@@ -49,6 +53,8 @@ def create_manifest(
         "template": template or config.TEMPLATE,
         "user_id": user_id,
         "plan": plan,
+        "visual_mode": visual_mode,
+        "visual_provider": visual_provider,
         "quota": accounts.quota_snapshot(user_id, plan, exclude_job_id=job_id),
         "status": status,
         "step": step,

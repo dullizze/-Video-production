@@ -35,6 +35,8 @@ def run(
     job_id: str | None = None,
     user_id: str | None = None,
     plan: str | None = None,
+    visual_mode: str | None = None,
+    visual_provider: str | None = None,
     out_dir: Path | None = None,
 ) -> Path:
     job_id = config.validate_job_id(job_id) if job_id else config.new_job_id()
@@ -44,6 +46,8 @@ def run(
     log = _setup_logging(out)
     selected_template = template or config.TEMPLATE
     selected_tone = tone or config.DEFAULT_TONE
+    selected_visual_mode = config.validate_visual_mode(visual_mode)
+    selected_visual_provider = config.validate_visual_provider(visual_provider)
     job_path = out / "job.json"
     if job_path.exists():
         job = jobs.read_job_path(job_path)
@@ -54,6 +58,8 @@ def run(
                 "template": selected_template,
                 "user_id": job.get("user_id") or user_id or config.DEFAULT_USER_ID,
                 "plan": job.get("plan") or plan or config.DEFAULT_PLAN,
+                "visual_mode": job.get("visual_mode") or selected_visual_mode,
+                "visual_provider": job.get("visual_provider") or selected_visual_provider,
                 "status": "running",
                 "step": "start",
                 "error": None,
@@ -71,8 +77,18 @@ def run(
             plan,
             "running",
             "start",
+            visual_mode=selected_visual_mode,
+            visual_provider=selected_visual_provider,
         )
-    log.info("=== 파이프라인 시작: %r → %s ===", topic, out)
+    selected_visual_mode = job.get("visual_mode") or selected_visual_mode
+    selected_visual_provider = job.get("visual_provider") or selected_visual_provider
+    log.info(
+        "=== 파이프라인 시작: %r → %s (visual=%s/%s) ===",
+        topic,
+        out,
+        selected_visual_mode,
+        selected_visual_provider,
+    )
 
     def step(num: int, name: str, fn):
         t0 = time.time()
@@ -96,8 +112,18 @@ def run(
     mp3 = step(3, "TTS", lambda: tts.synthesize(script["narration"], out))
     job["artifacts"]["audio"] = jobs.rel(out, mp3)
     job["artifacts"]["boundaries"] = "boundaries.json"
-    assets = step(4, "비주얼 수집", lambda: visuals.collect(script["visual_prompts"], out))
+    assets = step(
+        4,
+        "비주얼 수집",
+        lambda: visuals.collect(
+            script["visual_prompts"],
+            out,
+            visual_mode=selected_visual_mode,
+            visual_provider=selected_visual_provider,
+        ),
+    )
     job["artifacts"]["assets"] = [jobs.rel(out, asset) for asset in assets]
+    job["artifacts"]["visuals"] = "visuals.json"
     caps = step(5, "자막 그룹핑", lambda: captions.build(out))
     job["artifacts"]["captions"] = "captions.json"
     title = script.get("title") or script.get("hook") or topic
@@ -122,6 +148,8 @@ def main() -> None:
     parser.add_argument("--no-upload", action="store_true", help="업로드 생략 (Phase 1 기본)")
     parser.add_argument("--tone", default=None, help="톤 (기본: .env DEFAULT_TONE)")
     parser.add_argument("--template", default=None, help="템플릿: documentary | pop (기본: .env TEMPLATE)")
+    parser.add_argument("--visual-mode", default=None, help="비주얼 모드: auto | motion_image | stock_video | ai_video")
+    parser.add_argument("--visual-provider", default=None, help="비주얼 provider: auto | xai | kie | pexels | pixabay | local")
     parser.add_argument("--job-id", default=None, help="작업 ID (기본: 자동 생성)")
     args = parser.parse_args()
     run(
@@ -130,6 +158,8 @@ def main() -> None:
         no_upload=args.no_upload or True,
         template=args.template,
         job_id=args.job_id,
+        visual_mode=args.visual_mode,
+        visual_provider=args.visual_provider,
     )
 
 

@@ -37,13 +37,14 @@ docker compose up api
 
 - `GET /` — 내부용 대시보드
 - `GET /health`
-- `POST /jobs` — `job.json` 생성 후 기본값으로 백그라운드 실행 예약 (`auto_start=false`면 생성만). `user_id`, `plan`을 받으며 `auto_start=true`는 월간 quota 초과 시 402를 반환
+- `POST /jobs` — `job.json` 생성 후 기본값으로 백그라운드 실행 예약 (`auto_start=false`면 생성만). `user_id`, `plan`, `visual_mode`, `visual_provider`를 받으며 `auto_start=true`는 월간 quota 초과 시 402를 반환
 - `GET /jobs/{job_id}?date=YYYY-MM-DD` — job 상태 조회
 - `POST /jobs/{job_id}/run?date=YYYY-MM-DD` — 기존 job 실행/재실행 예약
 - `GET /jobs/{job_id}/video?date=YYYY-MM-DD` — 렌더 완료된 mp4 반환
 - `GET /users/{user_id}/quota?plan=free` — 임시 파일 기반 월간 사용량/쿼터 조회
 
 플랜별 기본 월간 쿼터는 `.env`의 `FREE_MONTHLY_QUOTA`, `BASIC_MONTHLY_QUOTA`, `PRO_MONTHLY_QUOTA`로 조정할 수 있습니다.
+비주얼 기본값은 `DEFAULT_VISUAL_MODE=motion_image`, `DEFAULT_VISUAL_PROVIDER=auto`입니다. 현재 영상 provider는 구조만 열어두었고, `stock_video`/`ai_video` 선택 시 기존 이미지 모션 파이프라인으로 안전하게 대체됩니다.
 
 ## 구조
 

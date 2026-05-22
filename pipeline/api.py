@@ -25,6 +25,8 @@ class JobCreate(BaseModel):
     job_id: str | None = None
     user_id: str | None = None
     plan: str | None = None
+    visual_mode: str | None = None
+    visual_provider: str | None = None
     auto_start: bool = True
 
 
@@ -37,6 +39,8 @@ def _set_queued(job: dict) -> dict:
     try:
         job["user_id"] = accounts.normalize_user_id(job.get("user_id"))
         job["plan"] = accounts.normalize_plan(job.get("plan"))
+        job["visual_mode"] = config.validate_visual_mode(job.get("visual_mode"))
+        job["visual_provider"] = config.validate_visual_provider(job.get("visual_provider"))
         job["quota"] = accounts.ensure_quota_available(job)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -63,6 +67,8 @@ def _run_job(job_id: str, run_dir: str) -> None:
                 job_id=job_id,
                 user_id=job.get("user_id"),
                 plan=job.get("plan"),
+                visual_mode=job.get("visual_mode"),
+                visual_provider=job.get("visual_provider"),
                 out_dir=out_dir,
             )
         except Exception as e:  # noqa: BLE001 - background task failure must be recorded
@@ -105,6 +111,8 @@ def create_job(payload: JobCreate, background_tasks: BackgroundTasks) -> dict:
             job_id=payload.job_id,
             user_id=payload.user_id,
             plan=payload.plan,
+            visual_mode=payload.visual_mode,
+            visual_provider=payload.visual_provider,
             overwrite=False,
         )
         if payload.auto_start:

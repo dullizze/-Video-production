@@ -38,10 +38,15 @@ CAPTION_PAUSE_MS = int(os.getenv("CAPTION_PAUSE_MS", "400"))    # 이만큼 멈�
 
 # --- 비주얼 ---
 NUM_VISUALS = int(os.getenv("NUM_VISUALS", "5"))
+VISUAL_MODES = ("auto", "motion_image", "stock_video", "ai_video")
+VISUAL_PROVIDERS = ("auto", "xai", "kie", "pexels", "pixabay", "local")
+DEFAULT_VISUAL_MODE = os.getenv("DEFAULT_VISUAL_MODE", "motion_image")
+DEFAULT_VISUAL_PROVIDER = os.getenv("DEFAULT_VISUAL_PROVIDER", "auto")
 # Grok 이미지(xAI). 키 없으면 Pollinations 폴백.
 # 모델: grok-imagine-image(표준) | grok-imagine-image-quality(고품질).
 XAI_API_KEY = os.getenv("XAI_API_KEY", "")
 XAI_IMAGE_MODEL = os.getenv("XAI_IMAGE_MODEL", "grok-imagine-image")
+KIE_API_KEY = os.getenv("KIE_API_KEY", "")
 
 JOB_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
 USER_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.@-]{0,63}$")
@@ -73,6 +78,22 @@ def validate_user_id(user_id: str) -> str:
     if not USER_ID_RE.fullmatch(user_id):
         raise ValueError("user_id는 영문/숫자로 시작하고 영문·숫자·_·-·.·@만 사용할 수 있습니다.")
     return user_id
+
+
+def validate_visual_mode(mode: str | None) -> str:
+    """사용자 선택 비주얼 모드 검증."""
+    mode = (mode or DEFAULT_VISUAL_MODE).strip().lower()
+    if mode not in VISUAL_MODES:
+        raise ValueError(f"visual_mode는 {', '.join(VISUAL_MODES)} 중 하나여야 합니다.")
+    return mode
+
+
+def validate_visual_provider(provider: str | None) -> str:
+    """사용자 선택 비주얼 provider 검증."""
+    provider = (provider or DEFAULT_VISUAL_PROVIDER).strip().lower()
+    if provider not in VISUAL_PROVIDERS:
+        raise ValueError(f"visual_provider는 {', '.join(VISUAL_PROVIDERS)} 중 하나여야 합니다.")
+    return provider
 
 
 def run_dir(d: date | None = None, job_id: str | None = None) -> Path:

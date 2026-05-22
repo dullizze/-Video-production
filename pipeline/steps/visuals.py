@@ -1,4 +1,4 @@
-"""④ 비주얼 수집: Grok(grok-2-image) → assets/*.jpg.
+"""④ 비주얼 수집: 현재는 이미지 기반, 영상 provider는 manifest에 자리만 만든다.
 
 XAI_API_KEY가 있으면 Grok 이미지 API, 없으면 Pollinations.ai 폴백(키 불필요).
 9:16 프레이밍은 렌더 단계(Remotion objectFit:cover)에서 처리한다.
@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import json
 from pathlib import Path
 from urllib.parse import quote
 
@@ -74,8 +75,22 @@ async def _fetch_pollinations(session: aiohttp.ClientSession, prompt: str, out: 
     return out
 
 
-async def _gather(prompts: list[str], assets_dir: Path) -> list[Path]:
-    use_grok = bool(config.XAI_API_KEY)
+def _resolve_image_provider() -> str:
+    return "xai" if config.XAI_API_KEY else "pollinations"
+
+
+def _fallback_reason(mode: str, provider: str) -> str | None:
+    if mode in {"stock_video", "ai_video"}:
+        return f"{mode}/{provider} provider는 아직 실험 전이라 motion_image로 대체했습니다."
+    if provider not in {"auto", "xai", "local"}:
+        return f"{provider} provider는 아직 실험 전이라 기본 이미지 provider로 대체했습니다."
+    if provider == "xai" and not config.XAI_API_KEY:
+        return "XAI_API_KEY가 없어 Pollinations 이미지 provider로 대체했습니다."
+    return None
+
+
+async def _gather(prompts: list[str], assets_dir: Path, image_provider: str) -> list[Path]:
+    use_grok = image_provider == "xai"
     results: list[Path] = []
     async with aiohttp.ClientSession() as session:
         for i, p in enumerate(prompts):
@@ -92,8 +107,34 @@ async def _gather(prompts: list[str], assets_dir: Path) -> list[Path]:
     return results
 
 
-def collect(prompts: list[str], out_dir: Path) -> list[Path]:
+def collect(
+    prompts: list[str],
+    out_dir: Path,
+    visual_mode: str | None = None,
+    visual_provider: str | None = None,
+) -> list[Path]:
     """비주얼 프롬프트 목록 → assets/*.jpg. 이미 있으면 재사용(멱등)."""
+    requested_mode = config.validate_visual_mode(visual_mode)
+    requested_provider = config.validate_visual_provider(visual_provider)
+    image_provider = _resolve_image_provider()
     assets_dir = out_dir / "assets"
     assets_dir.mkdir(parents=True, exist_ok=True)
-    return asyncio.run(_gather(prompts, assets_dir))
+    assets = asyncio.run(_gather(prompts, assets_dir, image_provider))
+    manifest = {
+        "requested_mode": requested_mode,
+        "requested_provider": requested_provider,
+        "effective_mode": "motion_image",
+        "effective_provider": image_provider,
+        "fallback_reason": _fallback_reason(requested_mode, requested_provider),
+        "items": [
+            {
+                "type": "image",
+                "path": f"assets/{asset.name}",
+                "prompt": prompts[i] if i < len(prompts) else "",
+                "source": image_provider,
+            }
+            for i, asset in enumerate(assets)
+        ],
+    }
+    (out_dir / "visuals.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    return assets

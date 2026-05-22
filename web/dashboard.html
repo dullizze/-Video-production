@@ -446,6 +446,24 @@
                 <option value="pro">Pro</option>
               </select>
 
+              <label for="visualMode">비주얼 방식</label>
+              <select id="visualMode">
+                <option value="motion_image">빠른 모드</option>
+                <option value="stock_video">자료영상 모드</option>
+                <option value="ai_video">AI 영상 모드</option>
+                <option value="auto">자동</option>
+              </select>
+
+              <label for="visualProvider">비주얼 Provider</label>
+              <select id="visualProvider">
+                <option value="auto">Auto</option>
+                <option value="xai">xAI Grok</option>
+                <option value="kie">Kie.ai</option>
+                <option value="pexels">Pexels</option>
+                <option value="pixabay">Pixabay</option>
+                <option value="local">Local</option>
+              </select>
+
               <label>템플릿</label>
               <div class="segments" role="group" aria-label="템플릿">
                 <button class="segment" type="button" data-template="documentary" aria-pressed="true">
@@ -497,6 +515,7 @@
                 <div class="step"><div class="key">Step</div><div id="stepValue" class="value">-</div></div>
                 <div class="step"><div class="key">User</div><div id="userValue" class="value">-</div></div>
                 <div class="step"><div class="key">Quota</div><div id="quotaValue" class="value">-</div></div>
+                <div class="step"><div class="key">Visual</div><div id="visualValue" class="value">-</div></div>
                 <div class="step"><div class="key">Template</div><div id="templateValue" class="value">-</div></div>
                 <div class="step"><div class="key">Updated</div><div id="updatedValue" class="value">-</div></div>
                 <div class="step"><div class="key">Run Dir</div><div id="runDirValue" class="value">-</div></div>
@@ -569,11 +588,16 @@
       function renderJob(job) {
         state.job = job;
         $("jobId").value = job?.job_id || "";
+        if (job?.visual_mode) $("visualMode").value = job.visual_mode;
+        if (job?.visual_provider) $("visualProvider").value = job.visual_provider;
         $("jobTitle").textContent = job?.topic || "작업 없음";
         $("jobMeta").textContent = job ? job.job_id : "-";
         $("stepValue").textContent = job?.step || "-";
         $("userValue").textContent = job ? `${job.user_id || "local"} / ${job.plan || "free"}` : "-";
         $("quotaValue").textContent = quotaText(job?.quota);
+        $("visualValue").textContent = job
+          ? `${job.visual_mode || "motion_image"} / ${job.visual_provider || "auto"}`
+          : "-";
         $("templateValue").textContent = job?.template || "-";
         $("updatedValue").textContent = job?.updated_at || "-";
         $("runDirValue").textContent = job?.run_dir || "-";
@@ -614,6 +638,8 @@
               tone: $("tone").value || null,
               user_id: $("userId").value || null,
               plan: $("plan").value || null,
+              visual_mode: $("visualMode").value || null,
+              visual_provider: $("visualProvider").value || null,
               template: state.template,
               auto_start: $("autoStart").checked,
             }),
