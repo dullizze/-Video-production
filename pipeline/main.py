@@ -2,15 +2,13 @@
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 import sys
 import time
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
 from pipeline import config
+from pipeline import jobs
 from pipeline.steps import captions, render, script_gen, tts, visuals
 
 
@@ -28,21 +26,6 @@ def _setup_logging(out_dir: Path) -> logging.Logger:
     return log
 
 
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
-def _write_job(out_dir: Path, data: dict[str, Any]) -> None:
-    data["updated_at"] = _now_iso()
-    (out_dir / "job.json").write_text(
-        json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
-
-
-def _rel(out_dir: Path, path: Path) -> str:
-    return path.relative_to(out_dir).as_posix()
-
-
 def run(
     topic: str,
     tone: str | None = None,
@@ -55,34 +38,21 @@ def run(
     log = _setup_logging(out)
     selected_template = template or config.TEMPLATE
     selected_tone = tone or config.DEFAULT_TONE
-    job = {
-        "job_id": job_id,
-        "topic": topic,
-        "tone": selected_tone,
-        "template": selected_template,
-        "status": "running",
-        "step": "start",
-        "created_at": _now_iso(),
-        "updated_at": _now_iso(),
-        "run_dir": str(out.relative_to(config.ROOT)),
-        "artifacts": {},
-        "error": None,
-    }
-    _write_job(out, job)
+    job = jobs.create_manifest(topic, selected_tone, selected_template, job_id, "running", "start")
     log.info("=== 파이프라인 시작: %r → %s ===", topic, out)
 
     def step(num: int, name: str, fn):
         t0 = time.time()
         job["status"] = "running"
         job["step"] = name
-        _write_job(out, job)
+        jobs.write_job(out, job)
         log.info("[%d] %s ...", num, name)
         try:
             result = fn()
         except Exception as e:
             job["status"] = "failed"
             job["error"] = {"step": name, "message": str(e)}
-            _write_job(out, job)
+            jobs.write_job(out, job)
             log.exception("[%d] %s 실패", num, name)
             raise
         log.info("[%d] %s 완료 (%.1fs)", num, name, time.time() - t0)
@@ -91,20 +61,20 @@ def run(
     script = step(2, "스크립트 생성", lambda: script_gen.generate(topic, out, selected_tone))
     job["artifacts"]["script"] = "script.json"
     mp3 = step(3, "TTS", lambda: tts.synthesize(script["narration"], out))
-    job["artifacts"]["audio"] = _rel(out, mp3)
+    job["artifacts"]["audio"] = jobs.rel(out, mp3)
     job["artifacts"]["boundaries"] = "boundaries.json"
     assets = step(4, "비주얼 수집", lambda: visuals.collect(script["visual_prompts"], out))
-    job["artifacts"]["assets"] = [_rel(out, asset) for asset in assets]
+    job["artifacts"]["assets"] = [jobs.rel(out, asset) for asset in assets]
     caps = step(5, "자막 그룹핑", lambda: captions.build(out))
     job["artifacts"]["captions"] = "captions.json"
     title = script.get("title") or script.get("hook") or topic
     final = step(6, "영상 합성", lambda: render.render(mp3, caps, assets, out, selected_template, title))
     job["artifacts"]["props"] = "props.json"
-    job["artifacts"]["video"] = _rel(out, final)
+    job["artifacts"]["video"] = jobs.rel(out, final)
     job["status"] = "done"
     job["step"] = "done"
     job["error"] = None
-    _write_job(out, job)
+    jobs.write_job(out, job)
 
     log.info("=== 완료: %s ===", final)
     if not no_upload:
