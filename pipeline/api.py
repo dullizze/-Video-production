@@ -5,6 +5,7 @@ from pathlib import Path
 from threading import Lock
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
 
@@ -15,6 +16,18 @@ from pipeline import presets
 from pipeline import main as pipeline_main
 
 app = FastAPI(title="Dullizze Shorts API", version="0.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 WORKER_LOCK = Lock()
 DASHBOARD_PATH = config.ROOT / "web" / "dashboard.html"
 
@@ -174,6 +187,18 @@ def create_job(payload: JobCreate, background_tasks: BackgroundTasks) -> dict:
         raise HTTPException(status_code=402, detail=str(e)) from e
     except FileExistsError as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
+
+
+@app.get("/jobs")
+def list_jobs(
+    user_id: str | None = None,
+    limit: int = Query(default=50, ge=1, le=200),
+    run_date: str | None = Query(default=None, alias="date"),
+) -> list[dict]:
+    try:
+        return jobs.list_jobs(run_date=run_date, user_id=user_id, limit=limit)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @app.get("/users/{user_id}/quota")

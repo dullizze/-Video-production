@@ -128,3 +128,30 @@ def find_job_dir(job_id: str, run_date: date | str | None = None) -> Path:
 
 def read_job(job_id: str, run_date: date | str | None = None) -> dict[str, Any]:
     return read_job_path(find_job_dir(job_id, run_date) / "job.json")
+
+
+def list_jobs(
+    run_date: date | str | None = None,
+    user_id: str | None = None,
+    limit: int = 50,
+) -> list[dict[str, Any]]:
+    runs_root = config.ROOT / "runs"
+    if run_date is not None:
+        date_text = run_date.isoformat() if isinstance(run_date, date) else run_date
+        paths = sorted((runs_root / date_text).glob("*/job.json"))
+    else:
+        paths = sorted(runs_root.glob("*/*/job.json"))
+
+    items: list[dict[str, Any]] = []
+    normalized_user = accounts.normalize_user_id(user_id) if user_id else None
+    for path in paths:
+        try:
+            job = read_job_path(path)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if normalized_user and job.get("user_id") != normalized_user:
+            continue
+        items.append(job)
+
+    items.sort(key=lambda job: str(job.get("updated_at") or ""), reverse=True)
+    return items[:limit]
