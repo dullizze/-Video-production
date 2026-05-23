@@ -29,6 +29,12 @@ DEFAULT_TONE = os.getenv("DEFAULT_TONE", "흥미로운_사실")
 # --- 템플릿 (영상 디자인) ---
 KNOWN_TEMPLATES = ("documentary", "pop", "banner")
 TEMPLATE = os.getenv("TEMPLATE", "documentary")  # documentary | pop | banner
+# 사용자에게 보여줄 한국어 "형" 이름(영상 제작 전 선택지). 내부 키는 그대로.
+TEMPLATE_LABELS = {
+    "documentary": "기본형",
+    "pop": "팝형",
+    "banner": "배너형",
+}
 # banner 템플릿(레터박스/밴드형) 강조색 기본값. 프리셋 accent_color로 덮어쓸 수 있음.
 DEFAULT_ACCENT_COLOR = os.getenv("DEFAULT_ACCENT_COLOR", "#ff4fa3")
 
@@ -117,6 +123,11 @@ def validate_template(template: str | None) -> str:
     if template not in KNOWN_TEMPLATES:
         raise ValueError(f"template은 {', '.join(KNOWN_TEMPLATES)} 중 하나여야 합니다.")
     return template
+
+
+def template_options() -> list[dict[str, str]]:
+    """영상 제작 전 선택지: [{value, label}] (한국어 '형' 이름)."""
+    return [{"value": t, "label": TEMPLATE_LABELS.get(t, t)} for t in KNOWN_TEMPLATES]
 
 
 def normalize_voice(voice: str | None) -> str:

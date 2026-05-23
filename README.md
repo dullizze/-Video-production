@@ -37,7 +37,8 @@ docker compose up api
 
 - `GET /` — 내부용 대시보드
 - `GET /health`
-- `POST /jobs` — `job.json` 생성 후 기본값으로 백그라운드 실행 예약 (`auto_start=false`면 생성만). `user_id`, `plan`, `visual_mode`, `visual_provider`를 받으며 `auto_start=true`는 월간 quota 초과 시 402를 반환
+- `GET /templates` — 영상 제작 전 고를 수 있는 "형" 목록(`value`=내부 키, `label`=한국어 이름: 기본형/팝형/배너형)
+- `POST /jobs` — `job.json` 생성 후 기본값으로 백그라운드 실행 예약 (`auto_start=false`면 생성만). `user_id`, `plan`, `visual_mode`, `visual_provider`를 받으며 `auto_start=true`는 월간 quota 초과 시 402를 반환. banner 상단 헤드라인은 `headline_main`/`headline_accent`로 직접 입력하며, 비우면 AI 대본값을 사용
 - `GET /jobs/{job_id}?date=YYYY-MM-DD` — job 상태 조회
 - `POST /jobs/{job_id}/run?date=YYYY-MM-DD` — 기존 job 실행/재실행 예약
 - `GET /jobs/{job_id}/video?date=YYYY-MM-DD` — 렌더 완료된 mp4 반환

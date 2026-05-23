@@ -473,14 +473,14 @@
                 <option value="local">Local</option>
               </select>
 
-              <label>템플릿</label>
-              <div class="segments" role="group" aria-label="템플릿">
-                <button class="segment" type="button" data-template="documentary" aria-pressed="true">
-                  Documentary
-                </button>
-                <button class="segment" type="button" data-template="pop" aria-pressed="false">Pop</button>
-                <button class="segment" type="button" data-template="banner" aria-pressed="false">Banner</button>
-              </div>
+              <label>형 (영상 디자인)</label>
+              <div id="templateSegments" class="segments" role="group" aria-label="형"></div>
+
+              <label for="headlineMain">상단 헤드라인 1줄 (banner · 비우면 자동)</label>
+              <input id="headlineMain" type="text" autocomplete="off" placeholder="예: 클로드가" />
+
+              <label for="headlineAccent">상단 헤드라인 2줄/강조 (banner · 비우면 자동)</label>
+              <input id="headlineAccent" type="text" autocomplete="off" placeholder="예: 인스타를 시작했다" />
 
               <label for="channelName">채널명 (banner)</label>
               <input id="channelName" type="text" autocomplete="off" placeholder="예: 소소한 AI 입문노트 | 소에노" />
@@ -637,6 +637,8 @@
         if (job?.footer_main) $("footerMain").value = job.footer_main;
         if (job?.footer_accent) $("footerAccent").value = job.footer_accent;
         if (job?.accent_color) $("accentColor").value = job.accent_color;
+        if (job?.headline_main) $("headlineMain").value = job.headline_main;
+        if (job?.headline_accent) $("headlineAccent").value = job.headline_accent;
         if (job?.preset_id) $("presetSelect").value = job.preset_id;
         $("jobTitle").textContent = job?.topic || "작업 없음";
         $("jobMeta").textContent = job ? job.job_id : "-";
@@ -758,7 +760,35 @@
           footer_main: $("footerMain").value || null,
           footer_accent: $("footerAccent").value || null,
           accent_color: $("accentColor").value || null,
+          headline_main: $("headlineMain").value || null,
+          headline_accent: $("headlineAccent").value || null,
         };
+      }
+
+      async function buildTemplates() {
+        const container = $("templateSegments");
+        let options = [
+          { value: "documentary", label: "기본형" },
+          { value: "pop", label: "팝형" },
+          { value: "banner", label: "배너형" },
+        ];
+        try {
+          const fetched = await request("/templates");
+          if (Array.isArray(fetched) && fetched.length) options = fetched;
+        } catch (_) {
+          /* 기본 목록 사용 */
+        }
+        container.innerHTML = "";
+        options.forEach((opt) => {
+          const button = document.createElement("button");
+          button.className = "segment";
+          button.type = "button";
+          button.dataset.template = opt.value;
+          button.textContent = opt.label;
+          button.addEventListener("click", () => setTemplate(opt.value));
+          container.appendChild(button);
+        });
+        setTemplate(state.template);
       }
 
       async function loadPresets() {
@@ -843,9 +873,7 @@
         }
       }
 
-      document.querySelectorAll(".segment").forEach((button) => {
-        button.addEventListener("click", () => setTemplate(button.dataset.template));
-      });
+      buildTemplates();
       $("createForm").addEventListener("submit", createJob);
       $("applyPresetBtn").addEventListener("click", applyPreset);
       $("savePresetBtn").addEventListener("click", savePreset);

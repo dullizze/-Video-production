@@ -45,6 +45,8 @@ def create_manifest(
     footer_main: str | None = None,
     footer_accent: str | None = None,
     accent_color: str | None = None,
+    headline_main: str | None = None,
+    headline_accent: str | None = None,
 ) -> dict[str, Any]:
     job_id = config.validate_job_id(job_id) if job_id else config.new_job_id()
     user_id = accounts.normalize_user_id(user_id)
@@ -63,6 +65,9 @@ def create_manifest(
     footer_main = (footer_main or resolved.get("footer_main") or "").strip()
     footer_accent = (footer_accent or resolved.get("footer_accent") or "").strip()
     accent_color = config.normalize_accent_color(accent_color or resolved.get("accent_color"))
+    # 헤드라인은 주제별 콘텐츠 → 프리셋 상속 없이 명시값만(비우면 AI 대본값을 렌더 단계에서 사용).
+    headline_main = (headline_main or "").strip()
+    headline_accent = (headline_accent or "").strip()
     out_dir = config.run_dir(job_id=job_id)
     if not overwrite and (out_dir / "job.json").exists():
         raise FileExistsError(f"이미 존재하는 job_id입니다: {job_id}")
@@ -80,6 +85,8 @@ def create_manifest(
         "footer_main": footer_main,
         "footer_accent": footer_accent,
         "accent_color": accent_color,
+        "headline_main": headline_main,
+        "headline_accent": headline_accent,
         "visual_mode": visual_mode,
         "visual_provider": visual_provider,
         "quota": accounts.quota_snapshot(user_id, plan, exclude_job_id=job_id),

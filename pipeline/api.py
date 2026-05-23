@@ -35,6 +35,8 @@ class JobCreate(BaseModel):
     footer_main: str | None = None
     footer_accent: str | None = None
     accent_color: str | None = None
+    headline_main: str | None = None
+    headline_accent: str | None = None
     auto_start: bool = True
 
 
@@ -98,6 +100,8 @@ def _run_job(job_id: str, run_dir: str) -> None:
                 footer_main=job.get("footer_main"),
                 footer_accent=job.get("footer_accent"),
                 accent_color=job.get("accent_color"),
+                headline_main=job.get("headline_main"),
+                headline_accent=job.get("headline_accent"),
                 out_dir=out_dir,
             )
         except Exception as e:  # noqa: BLE001 - background task failure must be recorded
@@ -118,6 +122,12 @@ def _enqueue(job: dict, background_tasks: BackgroundTasks) -> dict:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/templates")
+def list_templates() -> list[dict[str, str]]:
+    """영상 제작 전 고를 수 있는 '형' 목록(value=내부 키, label=한국어 이름)."""
+    return config.template_options()
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -149,6 +159,8 @@ def create_job(payload: JobCreate, background_tasks: BackgroundTasks) -> dict:
             footer_main=payload.footer_main,
             footer_accent=payload.footer_accent,
             accent_color=payload.accent_color,
+            headline_main=payload.headline_main,
+            headline_accent=payload.headline_accent,
             overwrite=False,
         )
         if payload.auto_start:

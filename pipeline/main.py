@@ -44,6 +44,8 @@ def run(
     footer_main: str | None = None,
     footer_accent: str | None = None,
     accent_color: str | None = None,
+    headline_main: str | None = None,
+    headline_accent: str | None = None,
     out_dir: Path | None = None,
 ) -> Path:
     job_id = config.validate_job_id(job_id) if job_id else config.new_job_id()
@@ -74,6 +76,8 @@ def run(
                 "footer_main": job.get("footer_main") or footer_main or "",
                 "footer_accent": job.get("footer_accent") or footer_accent or "",
                 "accent_color": job.get("accent_color") or config.normalize_accent_color(accent_color),
+                "headline_main": job.get("headline_main") or (headline_main or "").strip(),
+                "headline_accent": job.get("headline_accent") or (headline_accent or "").strip(),
                 "status": "running",
                 "step": "start",
                 "error": None,
@@ -101,6 +105,8 @@ def run(
             footer_main=footer_main,
             footer_accent=footer_accent,
             accent_color=accent_color,
+            headline_main=headline_main,
+            headline_accent=headline_accent,
         )
     selected_template = job.get("template") or selected_template
     selected_tone = job.get("tone") or selected_tone
@@ -154,8 +160,9 @@ def run(
     job["artifacts"]["captions"] = "captions.json"
     title = script.get("title") or script.get("hook") or topic
     overlay = {
-        "headlineMain": script.get("headline_main") or script.get("hook") or "",
-        "headlineAccent": script.get("headline_accent") or "",
+        # 사용자가 입력한 헤드라인이 있으면 우선, 없으면 AI 대본값.
+        "headlineMain": job.get("headline_main") or script.get("headline_main") or script.get("hook") or "",
+        "headlineAccent": job.get("headline_accent") or script.get("headline_accent") or "",
         "channelName": job.get("channel_name") or "",
         "footerMain": job.get("footer_main") or "",
         "footerAccent": job.get("footer_accent") or "",
@@ -195,6 +202,8 @@ def main() -> None:
     parser.add_argument("--footer-main", default=None, help="banner 하단 흰색 문구")
     parser.add_argument("--footer-accent", default=None, help="banner 하단 강조 문구")
     parser.add_argument("--accent-color", default=None, help="banner 강조색 (기본: .env DEFAULT_ACCENT_COLOR)")
+    parser.add_argument("--headline-main", default=None, help="banner 상단 헤드라인 1줄 (비우면 AI 대본값)")
+    parser.add_argument("--headline-accent", default=None, help="banner 상단 헤드라인 2줄/강조 (비우면 AI 대본값)")
     parser.add_argument("--job-id", default=None, help="작업 ID (기본: 자동 생성)")
     args = parser.parse_args()
     run(
@@ -212,6 +221,8 @@ def main() -> None:
         footer_main=args.footer_main,
         footer_accent=args.footer_accent,
         accent_color=args.accent_color,
+        headline_main=args.headline_main,
+        headline_accent=args.headline_accent,
     )
 
 
